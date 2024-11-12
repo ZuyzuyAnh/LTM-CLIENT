@@ -113,7 +113,11 @@ public class Admin extends JPanel {
         editQuestionButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                editQuestion();
+                try {
+                    editQuestion();
+                } catch (Exception ex) {
+                    throw new RuntimeException(ex);
+                }
             }
         });
 
@@ -182,7 +186,7 @@ public class Admin extends JPanel {
         return null;
     }
 
-    private void editQuestion() {
+    private void editQuestion() throws Exception {
         int selectedRow = questionTable.getSelectedRow();
         if (selectedRow == -1) {
             JOptionPane.showMessageDialog(this, "Vui lòng chọn câu hỏi để sửa.");
@@ -190,9 +194,35 @@ public class Admin extends JPanel {
         }
 
         String newAnswer = answerField.getText().trim();
-        if (audioData == null || newAnswer.isEmpty()) {
+        int questionId = (int) tableModel.getValueAt(selectedRow, 0);
+        if (newAnswer.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Vui lòng nhập đầy đủ đáp án và chọn file âm thanh.");
             return;
+        }
+
+        if (audioData != null) {
+            String soundPath = HTTPClient.uploadFile(selectedAudioFile.getAbsolutePath());
+            Question question = new Question(questionId, soundPath, newAnswer);
+
+            Message message = new Message(
+                    -1,
+                    "update question",
+                    Parser.toJson(question),
+                    null
+            );
+
+            Client.getInstance().sendSocketMessage(message);
+        }else {
+            Question question = new Question(questionId, "", newAnswer);
+
+            Message message = new Message(
+                    -1,
+                    "update question",
+                    Parser.toJson(question),
+                    null
+            );
+
+            Client.getInstance().sendSocketMessage(message);
         }
 
         try {
@@ -211,7 +241,16 @@ public class Admin extends JPanel {
         }
 
         try {
+            int questionId = (int) tableModel.getValueAt(selectedRow, 0);
+            Message message = new Message(
+                    currentUser.getId(),
+                    "delete question",
+                    Parser.toJson(questionId),
+                    null
+            );
             tableModel.removeRow(selectedRow);
+            Client.getInstance().sendSocketMessage(message);
+
             JOptionPane.showMessageDialog(this, "Câu hỏi đã được xóa.");
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "Lỗi khi xóa câu hỏi.");
@@ -257,7 +296,7 @@ public class Admin extends JPanel {
         }
 
         private void playAudio(String path) throws Exception {
-            AudioClient.getInstance().playAudio(path);
+            HTTPClient.sendAudioRequest(path);
         }
     }
 

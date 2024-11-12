@@ -35,7 +35,7 @@ public class Home extends JPanel {
         setBorder(new EmptyBorder(10, 10, 10, 10));
 
         JPanel topPanel = new JPanel(new BorderLayout());
-
+        this.currentUser = currentUser;
         currentUserLabel = new JLabel(currentUser.getUsername() + " - " + currentUser.getScore() + " điểm");
         currentUserLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         currentUserLabel.setForeground(Color.BLUE);
@@ -140,7 +140,4 @@ public class Home extends JPanel {
         this.frame = mainFrame;
     }
 
-    public void setCurrentUser(User user) {
-        this.currentUser = user;
-    }
 }

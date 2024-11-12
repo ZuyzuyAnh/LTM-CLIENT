@@ -1,3 +1,5 @@
+package org.example.client;
+
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
@@ -31,17 +33,17 @@ public class AudioClient extends Application {
                 }
             }
 
-            // Tạo đối tượng Media từ tệp tạm thời
-            Media media = new Media(tempFile.toURI().toString());
-            MediaPlayer mediaPlayer = new MediaPlayer(media);
-
-            // Phát âm thanh
-            mediaPlayer.play();
-
-            // Thiết lập cửa sổ JavaFX
-            primaryStage.setTitle("JavaFX Audio Player");
-            primaryStage.setScene(new Scene(mediaPlayer.getMedia()));
-            primaryStage.show();
+//            // Tạo đối tượng Media từ tệp tạm thời
+//            Media media = new Media(tempFile.toURI().toString());
+//            MediaPlayer mediaPlayer = new MediaPlayer(media);
+//
+//            // Phát âm thanh
+//            mediaPlayer.play();
+//
+//            // Thiết lập cửa sổ JavaFX
+//            primaryStage.setTitle("JavaFX Audio Player");
+//            primaryStage.setScene(new Scene(mediaPlayer.getMedia()));
+//            primaryStage.show();
 
         } catch (IOException e) {
             e.printStackTrace();

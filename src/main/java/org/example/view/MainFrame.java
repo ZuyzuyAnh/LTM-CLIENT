@@ -2,10 +2,7 @@ package org.example.view;
 
 import org.example.client.Client;
 import org.example.client.MessageListener;
-import org.example.dto.Message;
-import org.example.dto.Parser;
-import org.example.dto.Question;
-import org.example.dto.User;
+import org.example.dto.*;
 
 import javax.sound.sampled.*;
 import javax.swing.*;
@@ -60,17 +57,19 @@ public class MainFrame extends JFrame implements MessageListener {
 
         addWindowListener(new WindowAdapter() {
             public void windowClosing(WindowEvent e) {
-                Message message = new Message(
-                        currentUser.getId(),
-                        "exit",
-                        null,
-                        null
-                );
+                if (currentUser != null) {
+                    Message message = new Message(
+                            currentUser.getId(),
+                            "exit",
+                            null,
+                            null
+                    );
 
-                try {
-                    Client.getInstance().sendSocketMessage(message);
-                } catch (IOException ex) {
-                    throw new RuntimeException(ex);
+                    try {
+                        Client.getInstance().sendSocketMessage(message);
+                    } catch (IOException ex) {
+                        throw new RuntimeException(ex);
+                    }
                 }
             }
         });
@@ -106,7 +105,6 @@ public class MainFrame extends JFrame implements MessageListener {
 
                         home = new Home(user);
                         home.setFrame(this);
-                        home.setCurrentUser(user);
                         panel.add(home, "home");
                         this.currentUser = user;
 
@@ -141,6 +139,7 @@ public class MainFrame extends JFrame implements MessageListener {
                 break;
             case "invite accepted":
                 showInviteAcceptDialog();
+                handleStartGame(message);
                 break;
             case "invite declined":
                 JOptionPane.showMessageDialog(this, "Người chơi từ chối ", "Error", JOptionPane.ERROR_MESSAGE);
@@ -149,10 +148,57 @@ public class MainFrame extends JFrame implements MessageListener {
                 java.util.List<Question> questionList = Parser.fromJsonArray(message.getData(), Question.class);
                 admin.loadQuestions(questionList);
                 break;
-            case "play audio":
-                handleReceivedAudio(message);
+            case "answer":
+                JOptionPane.showMessageDialog(this, message.getErrorMsg(), "Time's up", JOptionPane.ERROR_MESSAGE);
                 break;
+            case "end game":
+                JOptionPane.showMessageDialog(this, message.getData());
+                home = new Home(currentUser);
+                home.setFrame(this);
+
+                message = new Message(
+                        currentUser.getId(),
+                        "leaderboard",
+                        null,
+                        null
+                );
+
+                Client.getInstance().sendSocketMessage(message);
+                showScreen("home");
         }
+    }
+
+    private void handleStartGame(Message message) throws IOException {
+        MatchStart matchStart = Parser.fromJson(message.getData(), MatchStart.class);
+        java.util.List<QuestionAnswer> questionList = matchStart.getQuestionAnswers();
+        int playerScore = 0;
+        showQuestion(questionList.get(0), 0, matchStart.getMatch(), questionList, playerScore);
+    }
+
+    private void showQuestion(QuestionAnswer questionAnswer, int round, Match match, java.util.List<QuestionAnswer> questionList, int playerScore) throws IOException {
+        Game gameScreen = new Game(questionAnswer, "Opponent", round, match, currentUser, playerScore);
+        panel.add(gameScreen, "game");
+        this.showScreen("game");
+
+        gameScreen.setOnQuestionCompletedListener(() -> {
+            if (round + 1 < 2) {
+                showQuestion(questionList.get(round + 1), round + 1, match, questionList, gameScreen.getPlayerScore());
+            } else {
+                EndRequest request = new EndRequest(
+                        gameScreen.getPlayerScore(),
+                        match.getId()
+                );
+
+                Message message = new Message(
+                        currentUser.getId(),
+                        "end game",
+                        Parser.toJson(request),
+                        null
+                );
+
+                Client.getInstance().sendSocketMessage(message);
+            }
+        });
     }
 
     private void showInvitationDialog(Message message) throws IOException {
@@ -186,16 +232,6 @@ public class MainFrame extends JFrame implements MessageListener {
         }
     }
 
-    private void handleReceivedAudio(Message message) throws IOException, UnsupportedAudioFileException, LineUnavailableException {
-        String base64Audio = message.getData();
-        byte[] audioBytes = Base64.getDecoder().decode(base64Audio);
-
-        try (AudioInputStream audioStream = AudioSystem.getAudioInputStream(new ByteArrayInputStream(audioBytes))) {
-            Clip clip = AudioSystem.getClip();
-            clip.open(audioStream);
-            clip.start();
-        }
-    }
 
     private void showInviteAcceptDialog() {
         JOptionPane optionPane = new JOptionPane("Người chơi đã chấp nhận\nĐếm ngược: 3",
@@ -207,14 +243,14 @@ public class MainFrame extends JFrame implements MessageListener {
         Timer timer = new Timer(1000, new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                countdown[0]--; // Giảm biến đếm ngược
+                countdown[0]--;
 
                 if (countdown[0] > 0) {
                     optionPane.setMessage("Người chơi đã chấp nhận\nĐếm ngược: " + countdown[0]);
-                    dialog.repaint(); // Cập nhật lại dialog
+                    dialog.repaint();
                 } else {
-                    ((Timer)e.getSource()).stop(); // Dừng timer khi kết thúc đếm ngược
-                    dialog.dispose(); // Đóng dialog
+                    ((Timer)e.getSource()).stop();
+                    dialog.dispose();
                 }
             }
         });
