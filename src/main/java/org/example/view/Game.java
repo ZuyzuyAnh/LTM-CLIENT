@@ -5,6 +5,7 @@ import org.example.client.HTTPClient;
 import org.example.dto.*;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -19,35 +20,34 @@ public class Game extends JPanel {
     private JTextField questionField;
     private JLabel countdownLabel;
     private JLabel playerScoreLabel;
+    private JLabel roundLabel; // Hiển thị vòng chơi
 
     private int countdown = 10;
     private int playerScore = 0;
-    private int opponentScore = 0;
-    private int round = 0;
     private String answer = "";
-    private Match match;
     private QuestionAnswer qa;
     private Timer timer;
-    private User currentUser;
+    private JButton selectedButton = null; // Nút được chọn gần đây
 
     private OnQuestionCompletedListener listener;
 
     public Game(QuestionAnswer questionAnswer, String opponent, int round, Match match, User currentUser, int playerScore) {
         setLayout(new BorderLayout());
-        this.round = round;
-        this.match = match;
         this.qa = questionAnswer;
-        this.currentUser = currentUser;
         this.playerScore = playerScore;
-        // Khởi tạo các label điểm và label tên người chơi
+
         playWithLabel = new JLabel("Playing with: " + opponent);
+        playWithLabel.setBorder(new EmptyBorder(0, 0, 0, 20));
+
         playerScoreLabel = new JLabel("Your Score: " + playerScore);
+        roundLabel = new JLabel("Round: " + round);
 
         JPanel topPanel = new JPanel(new BorderLayout());
         leaveButton = new JButton("Leave game");
 
-        JPanel scorePanel = new JPanel(new GridLayout(1, 2));
+        JPanel scorePanel = new JPanel(new GridLayout(1, 3));
         scorePanel.add(playerScoreLabel);
+        scorePanel.add(roundLabel);
 
         topPanel.add(playWithLabel, BorderLayout.WEST);
         topPanel.add(leaveButton, BorderLayout.EAST);
@@ -63,16 +63,14 @@ public class Game extends JPanel {
         listenButton = new JButton("Click here to listen");
         listenButton.setPreferredSize(new Dimension(150, 25));
         listenButton.addActionListener(e -> {
-            // Mở một thread mới để xử lý việc gửi yêu cầu âm thanh
             new Thread(() -> {
                 try {
                     HTTPClient.sendAudioRequest(questionAnswer.getQuestion().getSoundUrl());
                 } catch (Exception ex) {
-                    ex.printStackTrace();  // In lỗi nếu có
+                    ex.printStackTrace();
                 }
             }).start();
         });
-
 
         countdownLabel = new JLabel("Time Left: " + countdown + "s");
         countdownLabel.setFont(new Font("Arial", Font.BOLD, 14));
@@ -89,12 +87,11 @@ public class Game extends JPanel {
         String[] answerTexts = new String[questionAnswer.getAnswers().size()];
         questionAnswer.getAnswers().toArray(answerTexts);
 
-        // Gán giá trị cho từng nút trả lời và chuyển tham chiếu `answer` vào listener
         for (int i = 0; i < 7; i++) {
             answerButtons[i] = new JButton(answerTexts[i]);
             answerButtons[i].setPreferredSize(new Dimension(100, 30));
             answerPanel.add(answerButtons[i]);
-            answerButtons[i].addActionListener(new AnswerButtonListener(answerTexts[i])); // Truyền tham chiếu
+            answerButtons[i].addActionListener(new AnswerButtonListener(answerButtons[i], answerTexts[i]));
         }
 
         add(topPanel, BorderLayout.NORTH);
@@ -111,21 +108,21 @@ public class Game extends JPanel {
             @Override
             public void actionPerformed(ActionEvent e) {
                 if (countdown > 0) {
-                    countdown--;  // Giảm countdown mỗi giây
+                    countdown--;
                     countdownLabel.setText("Time Left: " + countdown + "s");
                 } else if (countdown == 0) {
-                    timer.stop();  // Dừng timer khi countdown hết
+                    timer.stop();
 
                     if (answer.equals(qa.getCorrectAnswer())) {
-                        JOptionPane.showMessageDialog(Game.this, "Time's up! Correct answer");  // Hiển thị thông báo
+                        JOptionPane.showMessageDialog(Game.this, "Time's up! Correct answer");
                         updateScore();
-                    }else {
-                        JOptionPane.showMessageDialog(Game.this, "Time's up! Incorrect, the answer is " + qa.getCorrectAnswer());  // Hiển thị thông báo
+                    } else {
+                        JOptionPane.showMessageDialog(Game.this, "Time's up! Incorrect, the answer is " + qa.getCorrectAnswer());
                     }
 
                     if (listener != null) {
                         try {
-                            listener.onQuestionCompleted();  // Gọi listener khi câu hỏi hoàn thành
+                            listener.onQuestionCompleted();
                         } catch (IOException ex) {
                             throw new RuntimeException(ex);
                         }
@@ -133,7 +130,7 @@ public class Game extends JPanel {
                 }
             }
         });
-        timer.start();  // Bắt đầu timer
+        timer.start();
     }
 
     private void updateScore() {
@@ -142,30 +139,36 @@ public class Game extends JPanel {
     }
 
     private void leaveGame() {
-        // Xử lý thoát khỏi trò chơi
         timer.stop();
         JOptionPane.showMessageDialog(this, "Bạn đã rời khỏi trò chơi!");
     }
 
     private class AnswerButtonListener implements ActionListener {
+        private JButton button;
         private String answer;
 
-        public AnswerButtonListener(String answer) {
+        public AnswerButtonListener(JButton button, String answer) {
+            this.button = button;
             this.answer = answer;
         }
 
         @Override
         public void actionPerformed(ActionEvent e) {
             Game.this.answer = this.answer;
+
+            // Làm nổi bật nút hiện tại và reset màu các nút khác
+            if (selectedButton != null) {
+                selectedButton.setBackground(null); // Trả lại màu mặc định cho nút trước đó
+            }
+            button.setBackground(Color.ORANGE); // Đặt màu đậm cho nút đã chọn
+            selectedButton = button; // Cập nhật nút đã chọn gần đây
         }
     }
 
-    // Setter cho listener
     public void setOnQuestionCompletedListener(OnQuestionCompletedListener listener) {
         this.listener = listener;
     }
 
-    // Interface để gọi khi câu hỏi hoàn thành
     public interface OnQuestionCompletedListener {
         void onQuestionCompleted() throws IOException;
     }
@@ -178,5 +181,3 @@ public class Game extends JPanel {
         this.playerScore = playerScore;
     }
 }
-
-

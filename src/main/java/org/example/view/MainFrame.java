@@ -11,10 +11,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.util.Base64;
+
 
 public class MainFrame extends JFrame implements MessageListener {
     private static CardLayout cardLayout;
@@ -24,7 +22,6 @@ public class MainFrame extends JFrame implements MessageListener {
     private static SignUp signUp;
     private static Home home;
     private static Admin admin;
-    private static Game game;
 
     private User currentUser;
 
@@ -39,8 +36,6 @@ public class MainFrame extends JFrame implements MessageListener {
         login.setFrame(this);
         signUp.setFrame(this);
 
-        connect();
-
         panel = new JPanel();
         cardLayout = new CardLayout();
         panel.setLayout(cardLayout);
@@ -51,6 +46,8 @@ public class MainFrame extends JFrame implements MessageListener {
         cardLayout.show(panel, "login");
 
         add(panel);
+
+        connect();
 
         setLocationRelativeTo(null);
         setVisible(true);
@@ -70,12 +67,14 @@ public class MainFrame extends JFrame implements MessageListener {
                     } catch (IOException ex) {
                         throw new RuntimeException(ex);
                     }
+
+                    Client.getInstance().closeConnection();
                 }
             }
         });
     }
 
-    private void connect() {
+    public void connect() {
         Client client = Client.getInstance();
         client.setMessageListener(this);
         client.startConnection("localhost", 8080);
@@ -153,9 +152,6 @@ public class MainFrame extends JFrame implements MessageListener {
                 break;
             case "end game":
                 JOptionPane.showMessageDialog(this, message.getData());
-                home = new Home(currentUser);
-                home.setFrame(this);
-
                 message = new Message(
                         currentUser.getId(),
                         "leaderboard",
@@ -165,6 +161,12 @@ public class MainFrame extends JFrame implements MessageListener {
 
                 Client.getInstance().sendSocketMessage(message);
                 showScreen("home");
+                break;
+            case "playing":
+                home.handlePlaying(message);
+                break;
+            case "history":
+                showUserInfo(message);
         }
     }
 
@@ -176,7 +178,14 @@ public class MainFrame extends JFrame implements MessageListener {
     }
 
     private void showQuestion(QuestionAnswer questionAnswer, int round, Match match, java.util.List<QuestionAnswer> questionList, int playerScore) throws IOException {
-        Game gameScreen = new Game(questionAnswer, "Opponent", round, match, currentUser, playerScore);
+        String opponentName;
+        if (match.getUser1().getUsername().equals(currentUser.getUsername())) {
+            opponentName = match.getUser2().getUsername();
+        }else {
+            opponentName = match.getUser1().getUsername();
+        }
+
+        Game gameScreen = new Game(questionAnswer, opponentName, round, match, currentUser, playerScore);
         panel.add(gameScreen, "game");
         this.showScreen("game");
 
@@ -257,5 +266,22 @@ public class MainFrame extends JFrame implements MessageListener {
 
         timer.start();
         dialog.setVisible(true);
+    }
+
+    public void showUserInfo(Message message) {
+        java.util.List<HistoryResponse> historyResponses = Parser.fromJsonArray(message.getData(), HistoryResponse.class);
+
+        UserInfo userInfo = new UserInfo(currentUser, historyResponses, this);
+        panel.add(userInfo, "user");
+        this.showScreen("user");
+    }
+
+    public void goBackToMainScreen(User user) {
+        this.currentUser = user;
+
+        home = new Home(currentUser);
+        home.setFrame(this);
+
+        showScreen("home");
     }
 }

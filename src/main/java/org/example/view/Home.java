@@ -41,13 +41,30 @@ public class Home extends JPanel {
         currentUserLabel.setForeground(Color.BLUE);
         currentUserLabel.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
-                openPersonalInfo();
+                Message message = new Message(
+                        currentUser.getId(),
+                        "history",
+                        null,
+                        null
+                );
+
+                try {
+                    Client.getInstance().sendSocketMessage(message);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
             }
         });
         topPanel.add(currentUserLabel, BorderLayout.WEST);
 
         logoutButton = new JButton("Log out");
-        logoutButton.addActionListener(e -> logout());
+        logoutButton.addActionListener(e -> {
+            try {
+                logout();
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
+        });
         topPanel.add(logoutButton, BorderLayout.EAST);
 
         add(topPanel, BorderLayout.NORTH);
@@ -79,9 +96,17 @@ public class Home extends JPanel {
 //        JOptionPane.showMessageDialog(this, "Thông tin cá nhân của " + currentUser + ":\nĐiểm: " + currentUserScore);
     }
 
-    private void logout() {
-        JOptionPane.showMessageDialog(this, "Đăng xuất thành công!");
-        System.exit(0);
+    private void logout() throws IOException {
+        Message message = new Message(
+                currentUser.getId(),
+                "logout",
+                null,
+                null
+        );
+
+        Client.getInstance().sendSocketMessage(message);
+
+        this.frame.showScreen("login");
     }
 
     private void sendInvite() throws IOException {
@@ -127,11 +152,41 @@ public class Home extends JPanel {
         updatePlayerList();
     }
 
+    public void handlePlaying(Message message) {
+        List<User> playingUsers = Parser.fromJsonArray(message.getData(), User.class);
+
+        Set<String> playingUsernames = playingUsers.stream()
+                .map(User::getUsername)
+                .collect(Collectors.toSet());
+
+        for (int i = 0; i < tableModel.getRowCount(); i++) {
+            String username = (String) tableModel.getValueAt(i, 0);
+            String status;
+
+            if (playingUsernames.contains(username)) {
+                status = "Playing";
+            } else if (onlineUsernames.contains(username)) {
+                status = "Online";
+            } else {
+                status = "Offline";
+            }
+
+            tableModel.setValueAt(status, i, 2);
+        }
+    }
+
+
     public void handleLeaderBoard(Message message) {
         List<User> leaderboard = Parser.fromJsonArray(message.getData(), User.class);
 
         players.clear();
-        leaderboard.forEach(user -> players.put(user.getUsername(), user));
+        leaderboard.forEach(user -> {
+            if (user.getId() == currentUser.getId()) {
+                currentUser = user;
+                currentUserLabel = new JLabel(currentUser.getUsername() + " - " + currentUser.getScore() + " điểm");
+            }
+            players.put(user.getUsername(), user);
+        });
 
         updatePlayerList();
     }

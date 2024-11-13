@@ -44,52 +44,53 @@ public class Client {
     }
 
     public void receiveMessage() {
-        while (true) {
+        while (!socket.isClosed()) { // Kiểm tra nếu socket vẫn mở
             try {
                 String jsonMessage = receiveSocketMessage();
                 if (jsonMessage == null) {
-                    break; // Exit the loop if we received null, indicating closure
+                    break; // Thoát khỏi vòng lặp nếu nhận được null (kết nối đã đóng)
                 }
                 if (messageListener != null) {
                     Message message = Parser.fromJson(jsonMessage, Message.class);
                     messageListener.onMessageReceived(message);
                 }
-            }catch (Exception e) {
-                e.printStackTrace();
+            } catch (Exception e) {
             }
-            // Break the loop on EOFException
-
         }
     }
-
-
-//    public void stopConnection(String username) {
-//        try {
-//            Message disconnectMessage = new Message("disconnect", "", username);
-//            String json = Parser.toJson(disconnectMessage);
-//            sendSocketMessage(json);
-//
-//            if (inputStream != null) inputStream.close();
-//            if (out != null) out.close();
-//            if (socket != null) socket.close();
-//
-//            System.out.println("Disconnected from server.");
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//    }
 
     public String receiveSocketMessage() {
         try {
             return inputStream.readUTF();
         } catch (IOException e) {
-            e.printStackTrace();
-            return null;
+            return null; // Trả về null nếu kết nối bị đóng
         }
     }
+
 
     public void sendSocketMessage(Message message) throws IOException {
         outputStream.writeUTF(Parser.toJson(message));
         outputStream.flush();
     }
+
+    public void closeConnection() {
+        try {
+            if (inputStream != null) {
+                inputStream.close();
+            }
+            if (outputStream != null) {
+                outputStream.close();
+            }
+            if (out != null) {
+                out.close();
+            }
+            if (socket != null && !socket.isClosed()) {
+                socket.close();
+            }
+            System.out.println("Connection closed successfully.");
+        } catch (IOException e) {
+            System.err.println("Error while closing the connection: " + e.getMessage());
+        }
+    }
+
 }

@@ -153,11 +153,13 @@ public class Admin extends JPanel {
         try {
             // Cập nhật bảng câu hỏi
             int nextId = tableModel.getRowCount() + 1;  // Tạo ID tự động
-            tableModel.addRow(new Object[]{nextId, answer, "Play"});
+            tableModel.addRow(new Object[]{nextId, answer, selectedAudioFile.getAbsolutePath(), "Play"}); // Thêm file path vào bảng
 
+            // Upload audio file và lấy đường dẫn từ server
             String soundPath = HTTPClient.uploadFile(selectedAudioFile.getAbsolutePath());
-            Question question = new Question(0, soundPath, answer);
 
+            // Tạo đối tượng Question và Message
+            Question question = new Question(0, soundPath, answer);
             Message message = new Message(
                     -1,
                     "upload audio",
@@ -165,6 +167,7 @@ public class Admin extends JPanel {
                     null
             );
 
+            // Gửi câu hỏi lên server
             Client.getInstance().sendSocketMessage(message);
 
             JOptionPane.showMessageDialog(this, "Câu hỏi đã được thêm.");
@@ -186,6 +189,7 @@ public class Admin extends JPanel {
         return null;
     }
 
+    // Sửa câu hỏi
     private void editQuestion() throws Exception {
         int selectedRow = questionTable.getSelectedRow();
         if (selectedRow == -1) {
@@ -212,7 +216,9 @@ public class Admin extends JPanel {
             );
 
             Client.getInstance().sendSocketMessage(message);
-        }else {
+            // Cập nhật đường dẫn âm thanh trong bảng
+            tableModel.setValueAt(soundPath, selectedRow, 2);  // Cập nhật cột "Path" trong bảng
+        } else {
             Question question = new Question(questionId, "", newAnswer);
 
             Message message = new Message(
@@ -225,12 +231,7 @@ public class Admin extends JPanel {
             Client.getInstance().sendSocketMessage(message);
         }
 
-        try {
-            tableModel.setValueAt(newAnswer, selectedRow, 1);
-            JOptionPane.showMessageDialog(this, "Câu hỏi đã được cập nhật.");
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Lỗi khi cập nhật câu hỏi.");
-        }
+        JOptionPane.showMessageDialog(this, "Câu hỏi đã được cập nhật.");
     }
 
     private void deleteQuestion() {
