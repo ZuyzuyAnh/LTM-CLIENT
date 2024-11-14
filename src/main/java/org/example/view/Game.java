@@ -14,7 +14,6 @@ import java.io.IOException;
 public class Game extends JPanel {
     private JButton[] answerButtons;
     private JButton listenButton;
-    private JButton leaveButton;
     private JLabel questionLabel;
     private JLabel playWithLabel;
     private JTextField questionField;
@@ -44,18 +43,13 @@ public class Game extends JPanel {
         roundLabel = new JLabel("Round: " + round);
 
         JPanel topPanel = new JPanel(new BorderLayout());
-        leaveButton = new JButton("Leave game");
 
-        leaveButton.addActionListener(e -> {
-            isLeaveGame = true;
-        });
 
         JPanel scorePanel = new JPanel(new GridLayout(1, 3));
         scorePanel.add(playerScoreLabel);
         scorePanel.add(roundLabel);
 
         topPanel.add(playWithLabel, BorderLayout.WEST);
-        topPanel.add(leaveButton, BorderLayout.EAST);
         topPanel.add(scorePanel, BorderLayout.CENTER);
 
         JPanel questionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
@@ -103,8 +97,6 @@ public class Game extends JPanel {
         add(questionPanel, BorderLayout.CENTER);
         add(answerPanel, BorderLayout.SOUTH);
 
-        leaveButton.addActionListener(e -> leaveGame());
-
         startCountdown();
     }
 
@@ -143,11 +135,6 @@ public class Game extends JPanel {
         playerScoreLabel.setText("Your Score: " + playerScore);
     }
 
-    private void leaveGame() {
-        timer.stop();
-        JOptionPane.showMessageDialog(this, "Bạn đã rời khỏi trò chơi!");
-    }
-
     private class AnswerButtonListener implements ActionListener {
         private JButton button;
         private String answer;
@@ -180,9 +167,5 @@ public class Game extends JPanel {
 
     public int getPlayerScore() {
         return playerScore;
-    }
-
-    public void setPlayerScore(int playerScore) {
-        this.playerScore = playerScore;
     }
 }

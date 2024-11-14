@@ -141,12 +141,23 @@ public class Home extends JPanel {
                 tableModel.addRow(new Object[]{player.getUsername(), player.getScore(), status});
             }
         });
+
+        revalidate();
+        repaint();
     }
 
     public void handleOnline(Message message) {
         List<User> online = Parser.fromJsonArray(message.getData(), User.class);
         onlineUsernames = online.stream()
-                .map(User::getUsername)
+                .map(user -> {
+                    if (!user.getRole().equals("admin")) {
+                        if (!players.containsKey(user.getUsername())) {
+                            players.put(user.getUsername(), user);
+                        }
+                        return user.getUsername();
+                    }
+                    return "";
+                })
                 .collect(Collectors.toSet());
 
         updatePlayerList();
@@ -173,6 +184,9 @@ public class Home extends JPanel {
 
             tableModel.setValueAt(status, i, 2);
         }
+
+        revalidate();
+        repaint();
     }
 
 
