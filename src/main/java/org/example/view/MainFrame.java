@@ -129,6 +129,7 @@ public class MainFrame extends JFrame implements MessageListener {
                 break;
             case "leaderboard":
                 home.handleLeaderBoard(message);
+                showScreen("home");
                 break;
             case "error":
                 JOptionPane.showMessageDialog(this, message.getErrorMsg(), "Error", JOptionPane.ERROR_MESSAGE);
@@ -158,9 +159,8 @@ public class MainFrame extends JFrame implements MessageListener {
                         null,
                         null
                 );
-
+                home = new Home(currentUser);
                 Client.getInstance().sendSocketMessage(message);
-                showScreen("home");
                 break;
             case "playing":
                 home.handlePlaying(message);

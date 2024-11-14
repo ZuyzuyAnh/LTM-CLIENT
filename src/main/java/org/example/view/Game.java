@@ -29,6 +29,7 @@ public class Game extends JPanel {
     private Timer timer;
     private JButton selectedButton = null; // Nút được chọn gần đây
 
+    private boolean isLeaveGame;
     private OnQuestionCompletedListener listener;
 
     public Game(QuestionAnswer questionAnswer, String opponent, int round, Match match, User currentUser, int playerScore) {
@@ -44,6 +45,10 @@ public class Game extends JPanel {
 
         JPanel topPanel = new JPanel(new BorderLayout());
         leaveButton = new JButton("Leave game");
+
+        leaveButton.addActionListener(e -> {
+            isLeaveGame = true;
+        });
 
         JPanel scorePanel = new JPanel(new GridLayout(1, 3));
         scorePanel.add(playerScoreLabel);

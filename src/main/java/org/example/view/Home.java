@@ -126,7 +126,7 @@ public class Home extends JPanel {
                 Client.getInstance().sendSocketMessage(inviteMsg);
                 JOptionPane.showMessageDialog(this, "Đã gửi lời mời tới " + selectedPlayer.getUsername());
             } else {
-                JOptionPane.showMessageDialog(this, selectedPlayer + " hiện không trực tuyến!");
+                JOptionPane.showMessageDialog(this, selectedPlayer.getUsername() + " hiện không trực tuyến!");
             }
         } else {
             JOptionPane.showMessageDialog(this, "Vui lòng chọn người chơi trực tuyến từ danh sách!");
@@ -183,7 +183,7 @@ public class Home extends JPanel {
         leaderboard.forEach(user -> {
             if (user.getId() == currentUser.getId()) {
                 currentUser = user;
-                currentUserLabel = new JLabel(currentUser.getUsername() + " - " + currentUser.getScore() + " điểm");
+                currentUserLabel = new JLabel( user.getUsername() + " - " + user.getScore() + " điểm");
             }
             players.put(user.getUsername(), user);
         });
