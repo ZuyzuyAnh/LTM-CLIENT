@@ -33,6 +33,7 @@ public class Admin extends JPanel {
     private JButton addQuestionButton, editQuestionButton, deleteQuestionButton, browseAudioButton;
     private File selectedAudioFile;
     private byte[] audioData;
+    private JButton logoutButton;
 
     private User currentUser;
     private MainFrame frame;
@@ -47,6 +48,19 @@ public class Admin extends JPanel {
         questionTable = new JTable(tableModel);
         JScrollPane scrollPane = new JScrollPane(questionTable);
         add(scrollPane, BorderLayout.CENTER);
+
+        logoutButton = new JButton("Log out");
+        logoutButton.addActionListener(e -> {
+            try {
+                logout();
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
+        });
+
+        JPanel topPanel = new JPanel(new BorderLayout());
+        topPanel.add(logoutButton, BorderLayout.EAST); // Căn nút logout về bên phải
+        add(topPanel, BorderLayout.NORTH);
 
         // Panel cho các thao tác quản lý câu hỏi
         JPanel controlPanel = new JPanel();
@@ -84,6 +98,8 @@ public class Admin extends JPanel {
         editPanel.add(deleteQuestionButton);
 
         controlPanel.add(editPanel);
+        controlPanel.add(addPanel);  // Thêm panel vào controlPanel
+        add(controlPanel, BorderLayout.SOUTH);
 
         // Sự kiện browse file âm thanh
         browseAudioButton.addActionListener(new ActionListener() {
@@ -175,6 +191,19 @@ public class Admin extends JPanel {
             e.printStackTrace();
             JOptionPane.showMessageDialog(this, "Lỗi khi thêm câu hỏi.");
         }
+    }
+
+    private void logout() throws IOException {
+        Message message = new Message(
+                currentUser.getId(),
+                "logout",
+                null,
+                null
+        );
+
+        Client.getInstance().sendSocketMessage(message);
+
+        this.frame.showScreen("login");
     }
 
     private byte[] encodeAudioFile(File file) {

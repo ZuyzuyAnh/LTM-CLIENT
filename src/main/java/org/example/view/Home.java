@@ -140,6 +140,10 @@ public class Home extends JPanel {
             if (!player.getUsername().equals(currentUser.getUsername())) {
                 tableModel.addRow(new Object[]{player.getUsername(), player.getScore(), status});
             }
+            if (player.getId() == currentUser.getId()) {
+                currentUser = player;
+                currentUserLabel = new JLabel( player.getUsername() + " - " + player.getScore() + " điểm");
+            }
         });
 
         revalidate();
@@ -195,10 +199,6 @@ public class Home extends JPanel {
 
         players.clear();
         leaderboard.forEach(user -> {
-            if (user.getId() == currentUser.getId()) {
-                currentUser = user;
-                currentUserLabel = new JLabel( user.getUsername() + " - " + user.getScore() + " điểm");
-            }
             players.put(user.getUsername(), user);
         });
 
