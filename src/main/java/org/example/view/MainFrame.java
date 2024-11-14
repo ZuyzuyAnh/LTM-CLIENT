@@ -159,7 +159,6 @@ public class MainFrame extends JFrame implements MessageListener {
                         null,
                         null
                 );
-                home = new Home(currentUser);
                 Client.getInstance().sendSocketMessage(message);
                 break;
             case "playing":
@@ -283,5 +282,9 @@ public class MainFrame extends JFrame implements MessageListener {
         home.setFrame(this);
 
         showScreen("home");
+    }
+
+    public void setCurrentUser(User user) {
+        this.currentUser = user;
     }
 }

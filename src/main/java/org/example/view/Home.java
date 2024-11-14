@@ -136,18 +136,17 @@ public class Home extends JPanel {
     private void updatePlayerList() {
         tableModel.setRowCount(0);
         players.values().forEach(player -> {
-            String status = onlineUsernames.contains(player.getUsername()) ? "Online" : "Offline";
-            if (!player.getUsername().equals(currentUser.getUsername())) {
-                tableModel.addRow(new Object[]{player.getUsername(), player.getScore(), status});
-            }
-            if (player.getId() == currentUser.getId()) {
-                currentUser = player;
-                currentUserLabel = new JLabel( player.getUsername() + " - " + player.getScore() + " điểm");
+            if (!player.getRole().equals("admin")) {
+                String status = onlineUsernames.contains(player.getUsername()) ? "Online" : "Offline";
+                if (!player.getUsername().equals(currentUser.getUsername())) {
+                    tableModel.addRow(new Object[]{player.getUsername(), player.getScore(), status});
+                }
+                if (player.getId() == currentUser.getId()) {
+                    this.frame.setCurrentUser(player);
+                    currentUserLabel.setText( player.getUsername() + " - " + player.getScore() + " điểm");
+                }
             }
         });
-
-        revalidate();
-        repaint();
     }
 
     public void handleOnline(Message message) {
