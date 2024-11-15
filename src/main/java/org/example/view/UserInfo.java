@@ -55,7 +55,13 @@ public class UserInfo extends JPanel {
 
         // Nút "Quay lại màn hình chính"
         backButton = new JButton("Quay lại màn hình chính");
-        backButton.addActionListener(e -> goBackToMainScreen());
+        backButton.addActionListener(e -> {
+            try {
+                goBackToMainScreen();
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
+        });
         userInfoPanel.add(backButton);
 
         add(userInfoPanel, BorderLayout.NORTH);
@@ -105,7 +111,7 @@ public class UserInfo extends JPanel {
     }
 
     // Phương thức để quay lại màn hình chính
-    private void goBackToMainScreen() {
+    private void goBackToMainScreen() throws IOException {
          mainFrame.goBackToMainScreen(user);
     }
 }

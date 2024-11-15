@@ -275,11 +275,16 @@ public class MainFrame extends JFrame implements MessageListener {
         this.showScreen("user");
     }
 
-    public void goBackToMainScreen(User user) {
+    public void goBackToMainScreen(User user) throws IOException {
         this.currentUser = user;
 
-        home = new Home(currentUser);
-        home.setFrame(this);
+        Message message = new Message(
+                currentUser.getId(),
+                "leaderboard",
+                null,
+                null
+        );
+        Client.getInstance().sendSocketMessage(message);
 
         showScreen("home");
     }
